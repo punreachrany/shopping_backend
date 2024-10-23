@@ -1,12 +1,13 @@
+from datetime import datetime, timedelta, timezone
 from django.shortcuts import get_object_or_404
+import jwt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated  # Import to use for user authentication
 from users.models import User
 from .serializers import UserSerializer
-import jwt
-from datetime import datetime, timedelta, timezone
-
+from .authentication import JWTAuthentication  # Import your JWTAuthentication class
 
 # Helper function to generate JWT tokens
 def generate_jwt(user):
@@ -18,15 +19,6 @@ def generate_jwt(user):
     token = jwt.encode(payload, 'secret', algorithm='HS256')
     return token
 
-
-# Helper function to decode JWT tokens
-def decode_jwt(token):
-    try:
-        return jwt.decode(token, 'secret', algorithms=['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise AuthenticationFailed('Unauthenticated!')
-
-
 # View for user registration
 class RegisterView(APIView):
     def post(self, request):
@@ -34,7 +26,6 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=201)
-
 
 # View for user login
 class LoginView(APIView):
@@ -53,24 +44,21 @@ class LoginView(APIView):
         response.set_cookie(key='jwt', value=token, httponly=True)
         return response
 
-
 # View to get authenticated user details
 class UserView(APIView):
+    authentication_classes = [JWTAuthentication]  # Use your JWT authentication class
+    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+
     def get(self, request):
-        token = request.COOKIES.get('jwt')
-
-        if not token:
-            raise AuthenticationFailed('Unauthenticated!')
-
-        payload = decode_jwt(token)
-
-        user = get_object_or_404(User, id=payload['id'])
+        user = request.user  # User is already authenticated, we can directly access it
         serializer = UserSerializer(user)
         return Response(serializer.data, status=200)
 
-
 # View for user logout
 class LogoutView(APIView):
+    authentication_classes = [JWTAuthentication]  # Use your JWT authentication class
+    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+
     def post(self, request):
         response = Response({'message': 'success'}, status=200)
         response.delete_cookie('jwt')
