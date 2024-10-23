@@ -42,7 +42,21 @@ INSTALLED_APPS = [
     'corsheaders',
     'shop_api',
     'products',
+    'orders',
 ]
+
+# settings.py
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'orders.authentication.JWTAuthentication',  # Path to your JWTAuthentication
+#         'rest_framework.authentication.SessionAuthentication',  # Optional
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+# }
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
