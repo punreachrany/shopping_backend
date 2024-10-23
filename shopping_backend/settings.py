@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'shop_api',
     'products',
-    'orders'
+    'orders',
 ]
 
 # settings.py
