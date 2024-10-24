@@ -1,9 +1,11 @@
 # orders/views.py
 
+from django.forms import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, NotFound
-
+from rest_framework import status
+from django.db import transaction
 from users.authentication import JWTAuthentication
 from .models import Order
 from products.models import Product
@@ -14,6 +16,7 @@ class CreateOrderView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]  # Use JWTAuthentication
 
+    @transaction.atomic  # Ensures database consistency (either all changes happen, or none do)
     def post(self, request):
         # Extract user from request using JWT authentication
         user = request.user
@@ -27,9 +30,21 @@ class CreateOrderView(APIView):
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             raise NotFound("Product not found.")
-
-        # Create the order
-        order = Order.objects.create(user=user, product=product, quantity=quantity)
+        
+        # Check if the requested quantity is available
+        if quantity > product.quantity:
+            return Response(
+                {
+                    "detail": f"Only {product.quantity} units available for {product.name}."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Create the order and update the product quantity
+        with transaction.atomic():
+            order = Order.objects.create(user=user, product=product, quantity=quantity)
+            product.quantity -= quantity
+            product.save()
 
         # Prepare the response data
         response_data = {
@@ -37,7 +52,8 @@ class CreateOrderView(APIView):
             'user_email': user.email,
             'product_id': order.product.id,
             'product_name': order.product.name,
-            'quantity': order.quantity,
+            'ordered_quantity': order.quantity,
+            'remaining_product_quantity': product.quantity,
             'created_at': order.created_at.isoformat()
         }
 
