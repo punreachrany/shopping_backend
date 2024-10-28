@@ -115,3 +115,100 @@ class GetOrderByYear(APIView):
         order_history = OrderHistory.objects.filter(user=request.user, date__year=year)
         serializer = OrderHistorySerializer(order_history, many=True)
         return Response(serializer.data, status=200)
+    
+class GetChartListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        product_list = request.data.get('product_list', [])
+        chart_list = []
+        total_price = 0.0
+
+        for item in product_list:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return Response(
+                    {"detail": f"Product with id {product_id} not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if quantity > product.quantity:
+                return Response(
+                    {"detail": f"Only {product.quantity} units available for {product.name}."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            price = product.price * quantity
+            total_price += price
+            chart_list.append({
+                "product": product.name,
+                "quantity": quantity,
+                "price": price
+            })
+
+        return Response({
+            "chart_list": chart_list,
+            "total_price": total_price
+        }, status=status.HTTP_200_OK)
+
+
+class PurchaseView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    @transaction.atomic
+    def post(self, request):
+        product_list = request.data.get('product_list', [])
+        total_price = 0.0
+
+        # Validate products and calculate total price
+        for item in product_list:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return Response(
+                    {"detail": f"Product with id {product_id} not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if quantity > product.quantity:
+                return Response(
+                    {"detail": f"Only {product.quantity} units available for {product.name}."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            total_price += product.price * quantity
+
+        # Create OrderHistory record
+        order_history = OrderHistory.objects.create(user=request.user, total_price=total_price)
+
+        # Create orders and update product quantities
+        for item in product_list:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+            product = Product.objects.get(id=product_id)
+
+            # Create Order
+            order = Order.objects.create(
+                user=request.user,
+                product=product,
+                quantity=quantity,
+                total_price=product.price * quantity,
+            )
+
+            # Update product quantity
+            product.quantity -= quantity
+            product.save()
+
+            # Add order to order history
+            order_history.order_list.add(order)
+
+        return Response({"detail": "Purchase successful.", "total_price": total_price}, status=status.HTTP_201_CREATED)
