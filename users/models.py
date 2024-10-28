@@ -13,6 +13,12 @@ class User(AbstractUser):
         blank=True
     )  # New field
     username = None  # Remove username field
+    profile_url = models.URLField(
+        max_length=300, 
+        blank=True, 
+        null=True, 
+        default="https://avatars.githubusercontent.com/u/54469196?s=400&u=c6efe15c16cba57e6aee56b60502ac0f5e5950ec&v=4"
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
