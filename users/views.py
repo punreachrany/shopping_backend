@@ -24,8 +24,17 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=201)
+        user = serializer.save()  # Save the user and get the instance
+
+        # Generate JWT token for the new user
+        token = generate_jwt(user)
+
+        response = Response(
+            {'status': 'success', 'jwt': token}, 
+            status=201
+        )
+        response.set_cookie(key='jwt', value=token, httponly=True)  # Set cookie with JWT
+        return response
 
 # View for user login
 class LoginView(APIView):
@@ -40,8 +49,11 @@ class LoginView(APIView):
 
         token = generate_jwt(user)
 
-        response = Response({'jwt': token}, status=200)
-        response.set_cookie(key='jwt', value=token, httponly=True)
+        response = Response(
+            {'status': 'success', 'jwt': token}, 
+            status=200
+        )
+        response.set_cookie(key='jwt', value=token, httponly=True)  # Set JWT as HttpOnly cookie
         return response
 
 # View to get authenticated user details
@@ -63,3 +75,13 @@ class LogoutView(APIView):
         response = Response({'message': 'success'}, status=200)
         response.delete_cookie('jwt')
         return response
+
+# New View to check if the user is logged in
+class IsLoggedInView(APIView):
+    authentication_classes = [JWTAuthentication]  # Use your JWT authentication class
+    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+
+    def get(self, request):
+        user = request.user  # Get the authenticated user
+        token = generate_jwt(user)  # Generate a new token if needed
+        return Response({'is_logged_in': True, 'jwt': token}, status=200)
