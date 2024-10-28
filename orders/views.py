@@ -6,9 +6,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, NotFound
 from rest_framework import status
 from django.db import transaction
-from orders.serializers import OrderSerializer
+from orders.serializers import OrderHistorySerializer, OrderSerializer
 from users.authentication import JWTAuthentication
-from .models import Order
+from .models import Order, OrderHistory
 from products.models import Product
 from users.models import User
 from rest_framework.permissions import IsAuthenticated
@@ -88,3 +88,30 @@ class OrderHistoryView(APIView):
         }
 
         return Response(response_data, status=200)
+    
+class GetAllOrderHistory(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        order_history = OrderHistory.objects.filter(user=request.user).order_by('-date')
+        serializer = OrderHistorySerializer(order_history, many=True)
+        return Response(serializer.data, status=200)
+
+class GetOrderByMonth(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, month, year):
+        order_history = OrderHistory.objects.filter(user=request.user, date__month=month, date__year=year)
+        serializer = OrderHistorySerializer(order_history, many=True)
+        return Response(serializer.data, status=200)
+
+class GetOrderByYear(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, year):
+        order_history = OrderHistory.objects.filter(user=request.user, date__year=year)
+        serializer = OrderHistorySerializer(order_history, many=True)
+        return Response(serializer.data, status=200)
