@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated  # Import to use for user
 from users.models import User
 from .serializers import UserSerializer
 from .authentication import JWTAuthentication  # Import your JWTAuthentication class
+from decouple import config
 
 # Helper function to generate JWT tokens
 def generate_jwt(user):
@@ -16,7 +17,8 @@ def generate_jwt(user):
         'exp': datetime.now(timezone.utc) + timedelta(minutes=60),
         'iat': datetime.now(timezone.utc)
     }
-    token = jwt.encode(payload, 'secret', algorithm='HS256')
+    secret_key = config("SECRET_KEY")
+    token = jwt.encode(payload, secret_key, algorithm='HS256')
     return token
 
 # View for user registration
