@@ -26,7 +26,7 @@ class SendEmailView(APIView):
         {message}
         """
 
-        subject = f'Shopping Inquiry from {user.email} - {title}'
+        subject = f'{title} - {user.email}'
 
         try:
             send_mail(

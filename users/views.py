@@ -82,6 +82,4 @@ class IsLoggedInView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
     def get(self, request):
-        user = request.user  # Get the authenticated user
-        token = generate_jwt(user)  # Generate a new token if needed
-        return Response({'is_logged_in': True, 'jwt': token}, status=200)
+        return Response({'is_logged_in': True}, status=200)
