@@ -17,7 +17,6 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 
 # Applications
-# Applications
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
