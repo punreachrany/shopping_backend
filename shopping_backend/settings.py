@@ -13,8 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 SECRET_KEY = config('SECRET_KEY', default='your-secret-key')  # Load from .env
 DEBUG = config('DEBUG', default=True, cast=bool)
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')  # Specify allowed hosts
 
+
+# Applications
 # Applications
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -26,13 +28,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'storages',  # AWS storage backend
-    'users',
-    'products',
-    'orders',
-    'email_sender',
-    'concert',
-    'uploads',
+    'users',     # Custom user app
+    'products',  # Products app
+    'orders',    # Orders app
+    'email_sender',  # Email sender app
+    'concert',   # Concert app
+    'uploads',   # File uploads app
 ]
+
 
 # Middleware
 MIDDLEWARE = [
@@ -112,23 +115,54 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ap-northeast-2')  # Example region
-AWS_S3_SIGNATURE_NAME = 's3v4'
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None  # Set to None for proper S3 permissions
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='ap-northeast-2')  # Set your region
+AWS_S3_SIGNATURE_NAME = 's3v4'  # Signature version
+AWS_S3_FILE_OVERWRITE = False  # Prevent file overwriting
+AWS_DEFAULT_ACL = None  # Use None for correct permissions
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'  # Custom domain for S3
 
-# Media Files
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# Media Files Configuration
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'  # URL for media files
+
+# Static Files Configuration
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'  # URL for static files
+STATICFILES_STORAGE = 'storages.backends.s3.S3Boto3Storage'  # Default storage for static files
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+            "region_name": AWS_S3_REGION_NAME,
+            "file_overwrite": AWS_S3_FILE_OVERWRITE,
+            "default_acl": AWS_DEFAULT_ACL,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+            "region_name": AWS_S3_REGION_NAME,
+            "file_overwrite": AWS_S3_FILE_OVERWRITE,
+            "default_acl": AWS_DEFAULT_ACL,
+        },
+    },
+}
 
 # Email Configuration (using Gmail SMTP)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('MY_EMAIL')
-EMAIL_HOST_PASSWORD = config('GMAIL_APP_PASSWORD')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # SMTP backend
+EMAIL_HOST = 'smtp.gmail.com'  # Gmail SMTP server
+EMAIL_PORT = 587  # Port for TLS
+EMAIL_USE_TLS = True  # Use TLS for security
+EMAIL_HOST_USER = config('MY_EMAIL')  # Your email address
+EMAIL_HOST_PASSWORD = config('GMAIL_APP_PASSWORD')  # Your app password
+
 
 # Default Auto Field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
