@@ -28,8 +28,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'storages',  # AWS storage backend
     'users',     # Custom user app
-    'products',  # Products app
-    'orders',    # Orders app
     'email_sender',  # Email sender app
     'concert',   # Concert app
     'uploads',   # File uploads app
