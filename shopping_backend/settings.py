@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'products',
     'orders',
     'email_sender',
-    'concert'
+    'concert',
+    'storages'
 ]
 
 
@@ -144,3 +145,16 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('MY_EMAIL')
 EMAIL_HOST_PASSWORD = config('GMAIL_APP_PASSWORD')
+
+# AWS settings
+AWS_ACCESS_KEY_ID = config('YOUR_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('YOUR_AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+
+AWS_S3_SIGNATURE_NAME = 's3v4'
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME')  # e.g., 'us-east-1'
+AWS_S3_FILE_OVERWRITE = False
+
+# Media files (uploads)
+AWS_DEFAULT_ACL = None
+DEFAULT_FILE_STORAGE = 'storages.backends.s3.S3Boto3Storage'
